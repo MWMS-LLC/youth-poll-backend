@@ -1,0 +1,60 @@
+﻿id,category_id,block_number,block_text,version,uuid,category_name
+1,1,1,Do They Like Me?,1,2b48a45c-a777-4fbc-8ef7-a1c962b13149,Love
+2,1,2,"Small Moves, Big Feels
+🎵[playlist:Love]",1,3b11a3a1-05f4-4862-a6b8-7d8d97a28e33,Love
+3,1,3,Kind of a Couple,1,5f77b0cb-330e-41a5-b81c-1d3ab1ed8f29,Love
+4,1,4,"Ghosts, Gaps & Goodbyes",1,acc6ec24-512e-4d5f-8db6-b5bf86eca745,Love
+5,1,5," The Sky That Stayed
+🎵[playlist:Breakup]",1,d3d6883b-8ebc-4c63-b44b-694c66279e53,Love
+6,2,1,Friend Vibes,1,9b08ccfe-4d32-4602-bdfe-b5600b7a7dbd,Friends
+7,2,2,Loyalty?,1,eccde825-665d-42f5-a61a-628e6091b258,Friends
+8,2,3,"No Invite …
+🎵[playlist:Hurt]",1,ff278bdf-20b6-412d-b6ce-ab72c99313b9,Friends
+9,2,4,"Fitting In …
+🎵[playlist:Spiral]",1,f08f896d-b052-4915-a04b-a162a8a54797,Friends
+10,2,5,Inviting …,1,c78369e0-81cb-4d76-91bc-5911e4452b29,Friends
+11,3,1,"Scroll. Post. Spiral.
+🎵[playlist:Spiral]",1,ac841676-01ad-4c33-b067-f1ba5986942b,Social_Media
+12,3,2,Real Feels vs Feed Feels,1,567dc605-3515-445b-9a21-bb18db5d8094,Social_Media
+13,3,3,"Posts I Regret, Posts I Miss",1,4b2bae2a-da65-49fa-98c9-3c4543f82128,Social_Media
+14,3,4,"Trends, Friends & Emotional Graduation",1,f3e170a0-6292-44e7-8e22-984e736ae7c3,Social_Media
+15,3,5,Birthday Posts: Joy or Judgment?,1,c9620814-e3d8-4067-a952-60e05667020e,Social_Media
+16,4,1,"Soft Power, Loud Heart",1,ad021302-66f2-4c2e-b8ed-8d8648adf680,Pinky
+17,4,2,"Tiny Things, Big Feelings
+🎵[playlist:Pinky]",1,7b91e32b-3185-4090-b77d-a168f464717e,Pinky
+18,4,3,"Daily Drip, Inner Script",1,96f426b4-f10e-4111-b6e5-a5560e05514a,Pinky
+19,5,1,"Lowkey Legends
+🎵[playlist:Lowkey]",1,3d928ea4-ce89-41ff-b41d-e3f08b52ed5c,Lowkey
+20,5,2,"Quiet Mode, Full Power",1,fabc58eb-c8d4-40df-b33a-bf4f67df7303,Lowkey
+21,6,1,Real Me & Summer Vibes,1,94a5aca4-8390-45e7-90cd-a7a80430e263,Personal
+22,6,2,"Trust, Worth & What You Carry
+🎵[playlist:Believe]",1,f238fbf6-f59a-4e12-bc8c-23792ce1a694,Personal
+23,6,3,"Regret, Repair, and the Road Ahead",1,fb9d45d3-d052-452e-8aa7-9ccaf8accf4f,Personal
+24,6,4,"Color, Weather, Sound: You",1,184b9e1f-86a0-4d37-be0b-8fcbd9273f10,Personal
+25,6,5,What They Donâ€™t Get,1,59dffbd5-d94e-4804-bbd3-9fa32c447fff,Personal
+26,6,6,"Like, You Know, Kinda Confident",1,26de9008-f30e-4e5d-bf1a-009ce95c16cd,Personal
+27,6,7,Outside Looking In,1,00c2027f-948a-40f7-8bff-fa98119fc7d9,Personal
+28,6,8,"Inspiration & Direction
+🎵[playlist:Believe]",1,eb4e7798-0bbd-40f7-971d-a22396ac0892,Personal
+29,7,1,"Forgive, for Real",1,ce5345cb-21ee-481d-8f46-2bf76f452cb8,Healing
+30,7,2,The Way Forward,1,148ec956-7aa9-493d-996d-c562cb0d941d,Healing
+31,8,1,"I Know Who I Am
+🎵[playlist:Believe]",1,ea1ab8c0-6326-41b7-9bd4-1eb136cc6780,Defense
+32,8,2,Someone Has to Do Something,1,ff70ab10-9733-489c-9251-096304f500c3,Defense
+33,9,1,"Home is a Vibe
+🎵[playlist:Family]",1,a01a8edc-8531-4f31-b5d5-2db71ef141a1,Family
+34,9,2,Household,1,fe1dd49b-a67c-466a-bee1-346ce35471b9,Family
+35,9,3,When Home Gets Loud,1,752f937f-796e-4473-9363-5ec3b9b3e1c4,Family
+36,9,4,Chores,1,17314ec6-fb10-42ca-a5ae-6d1e585d310e,Family
+37,10,1,"AI & Me: Use It, Build It, or Stop it
+🎵[playlist:AI_&_My_Future]",1,ab4a7f45-aac8-40b2-b9b6-ebda9b0afd50,Dream Era
+38,10,2,"Work, Worth & the AI Economy",1,9c3f7c6c-8de8-45fb-b4a0-e6f846bb6d4b,Dream Era
+39,10,3,"Future Me: Real, Brave, and Still Human
+🎵[playlist:Theme_Song]",1,5c8edc2d-a1b4-4caf-a49d-ff123225a444,Dream Era
+40,11,1,Ready or Not,1,f8dfe6a4-ee2c-4749-a700-15c2e3c4b1b7,School
+41,11,2,Between the Bells,1,ad23c57b-844e-40b0-af2b-fb615a28d491,School
+42,11,3,When You Speak Up,1,77f0a234-b895-404e-82e5-797d386d44de,School
+43,11,4,Rethinking School ,1,7d60137a-4506-4f82-8c80-6216060ddc37,School
+44,12,1,"Bodily Betrayal 101
+🎵[playlist:Chaos]",1,7be8b015-0f92-4fd1-932e-b5efa2d02acd,Chaos
+45,12,2,Cringe & Chaos Edition,1,e123c4f7-2e80-45ad-bca4-cbb415879eb6,Chaos

@@ -404,10 +404,10 @@ async def get_question_results(question_code: str, request: Request):
             
             # Get other responses
             other_result = conn.execute(text("""
-                SELECT other_text, submitted_at
+                SELECT other_text, created_at
                 FROM other_responses
                 WHERE question_code = :question_code AND site = :site
-                ORDER BY submitted_at DESC
+                ORDER BY created_at DESC
                 LIMIT 50
             """), {"question_code": question_code, "site": site})
             

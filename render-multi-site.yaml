@@ -30,7 +30,7 @@ services:
     staticPublishPath: ./youth-poll-frontend/dist
     envVars:
       - key: VITE_API_BASE_URL
-        value: https://youth-poll-backend.onrender.com/api
+        value: https://youth-poll-backend.onrender.com
 
   # Teen Site Frontend
   - type: web
@@ -41,7 +41,7 @@ services:
     staticPublishPath: ./teen-poll-frontend/dist
     envVars:
       - key: VITE_API_BASE_URL
-        value: https://youth-poll-backend.onrender.com/api
+        value: https://youth-poll-backend.onrender.com
 
   # Parents Site Frontend
   - type: web
@@ -52,7 +52,7 @@ services:
     staticPublishPath: ./parents-poll-frontend/dist
     envVars:
       - key: VITE_API_BASE_URL
-        value: https://youth-poll-backend.onrender.com/api
+        value: https://youth-poll-backend.onrender.com
 
   # Schools Site Frontend
   - type: web
@@ -63,7 +63,7 @@ services:
     staticPublishPath: ./schools-poll-frontend/dist
     envVars:
       - key: VITE_API_BASE_URL
-        value: https://youth-poll-backend.onrender.com/api
+        value: https://youth-poll-backend.onrender.com
 
 databases:
   # Shared PostgreSQL Database

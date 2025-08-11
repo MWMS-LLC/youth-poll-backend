@@ -38,3 +38,4 @@ CREATE INDEX idx_other_responses_site ON other_responses(site);
 CREATE INDEX idx_checkbox_responses_site ON checkbox_responses(site);
 CREATE INDEX idx_users_site ON users(site);
 CREATE INDEX idx_user_block_progress_site ON user_block_progress(site);
+

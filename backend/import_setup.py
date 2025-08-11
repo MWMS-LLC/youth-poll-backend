@@ -410,7 +410,7 @@ def create_results_schema(database_url=None):
     try:
         engine = create_engine(database_url)
         
-        schema_file = Path(__file__).parent / 'schema_results_sqlite.sql'
+        schema_file = Path(__file__).parent / 'schema_results.sql'
         with open(schema_file, 'r') as f:
             schema_sql = f.read()
         

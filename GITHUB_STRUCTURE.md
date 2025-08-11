@@ -129,3 +129,4 @@ id,category_name,description,site
 3. **Easy Management**: Each site can be updated independently
 4. **Scalable**: Easy to add new sites following the same pattern
 5. **Clear Naming**: No confusion about which site is which
+

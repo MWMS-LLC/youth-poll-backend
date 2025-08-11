@@ -15,17 +15,28 @@ import uuid
 import os
 from datetime import datetime
 import uvicorn
+from pathlib import Path
+import logging
 
 # ======================
 # Configuration
 # ======================
-DATABASE_URL = os.getenv('DATABASE_URL', 'postgresql://localhost/youth_poll_pg')
+DATABASE_URL = os.getenv('DATABASE_URL', 'sqlite:///youth_poll.db')
 DEBUG = os.getenv('DEBUG', 'true').lower() == 'true'
+
+# Get database URL
+def get_database_url():
+    """Get database URL - use SQLite for Render compatibility"""
+    url = os.getenv('DATABASE_URL', DATABASE_URL)
+    # If it's a PostgreSQL URL from Render, use SQLite instead
+    if url.startswith('postgresql://'):
+        return 'sqlite:///youth_poll.db'
+    return url
 
 # ======================
 # Database Setup
 # ======================
-engine = create_engine(DATABASE_URL, echo=DEBUG)
+engine = create_engine(get_database_url())
 
 # ======================
 # Pydantic Models
@@ -117,6 +128,105 @@ def get_option_data(question_code: str, option_code: str):
                 "companion_advice": row[3]
             }
         return None
+
+# ======================
+# Database Setup
+# ======================
+def initialize_database():
+    """Initialize database tables and import data if needed"""
+    try:
+        # Log the database URL (without password for security)
+        db_url = get_database_url()
+        safe_url = db_url.replace(db_url.split('@')[0].split(':')[-1], '***') if '@' in db_url else db_url
+        logging.info(f"🔧 Connecting to database: {safe_url}")
+        
+        with engine.connect() as conn:
+            # Check if tables exist
+            result = conn.execute(text("""
+                SELECT EXISTS (
+                    SELECT FROM information_schema.tables 
+                    WHERE table_name = 'categories'
+                )
+            """))
+            
+            if not result.scalar():
+                logging.info("🔧 Database tables not found. Creating schema...")
+                
+                # Create setup schema
+                setup_schema_file = Path(__file__).parent / 'schema_setup.sql'
+                with open(setup_schema_file, 'r') as f:
+                    setup_sql = f.read()
+                
+                # Parse and execute setup schema
+                statements = []
+                current_statement = ""
+                
+                for line in setup_sql.split('\n'):
+                    line = line.strip()
+                    if line.startswith('--'):
+                        continue
+                    if line:
+                        current_statement += line + " "
+                    elif current_statement.strip():
+                        if current_statement.strip().endswith(';'):
+                            statements.append(current_statement.strip())
+                            current_statement = ""
+                
+                if current_statement.strip():
+                    statements.append(current_statement.strip())
+                
+                for i, statement in enumerate(statements):
+                    if statement and not statement.startswith('--'):
+                        try:
+                            logging.info(f"Executing setup statement {i+1}...")
+                            conn.execute(text(statement))
+                            conn.commit()
+                        except Exception as e:
+                            logging.error(f"Error in setup statement {i+1}: {e}")
+                
+                # Create results schema
+                results_schema_file = Path(__file__).parent / 'schema_results.sql'
+                with open(results_schema_file, 'r') as f:
+                    results_sql = f.read()
+                
+                # Parse and execute results schema
+                statements = []
+                current_statement = ""
+                
+                for line in results_sql.split('\n'):
+                    line = line.strip()
+                    if line.startswith('--'):
+                        continue
+                    if line:
+                        current_statement += line + " "
+                    elif current_statement.strip():
+                        if current_statement.strip().endswith(';'):
+                            statements.append(current_statement.strip())
+                            current_statement = ""
+                
+                if current_statement.strip():
+                    statements.append(current_statement.strip())
+                
+                for i, statement in enumerate(statements):
+                    if statement and not statement.startswith('--'):
+                        try:
+                            logging.info(f"Executing results statement {i+1}...")
+                            conn.execute(text(statement))
+                            conn.commit()
+                        except Exception as e:
+                            logging.error(f"Error in results statement {i+1}: {e}")
+                
+                logging.info("✅ Database initialization completed!")
+                logging.info("ℹ️ Use import_setup.py to import data if needed")
+            else:
+                logging.info("✅ Database tables already exist")
+                
+    except Exception as e:
+        logging.error(f"❌ Database initialization failed: {e}")
+        logging.error(f"Database URL format: {get_database_url().split('@')[1] if '@' in get_database_url() else 'local'}")
+
+# Initialize database on startup
+initialize_database()
 
 # ======================
 # API Endpoints

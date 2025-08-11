@@ -1,0 +1,10 @@
+# Railway ignore file - excludes local development files from deployment
+import_env_py311/
+venv/
+__pycache__/
+*.pyc
+.DS_Store
+*.db
+*.sqlite
+.env
+.env.local

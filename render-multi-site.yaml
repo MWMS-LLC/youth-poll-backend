@@ -26,44 +26,44 @@ services:
     name: youth-poll-frontend
     env: static
     plan: free
-    buildCommand: npm install && npm run build
-    staticPublishPath: ./dist
+    buildCommand: cd youth-poll-frontend && npm install && npm run build
+    staticPublishPath: ./youth-poll-frontend/dist
     envVars:
       - key: VITE_API_BASE_URL
-        value: https://youth.myworldmysay.com/api
+        value: https://youth-poll-backend.onrender.com/api
 
   # Teen Site Frontend
   - type: web
     name: teen-poll-frontend
     env: static
     plan: free
-    buildCommand: npm install && npm run build
-    staticPublishPath: ./dist
+    buildCommand: cd teen-poll-frontend && npm install && npm run build
+    staticPublishPath: ./teen-poll-frontend/dist
     envVars:
       - key: VITE_API_BASE_URL
-        value: https://teen.myworldmysay.com/api
+        value: https://youth-poll-backend.onrender.com/api
 
   # Parents Site Frontend
   - type: web
     name: parents-poll-frontend
     env: static
     plan: free
-    buildCommand: npm install && npm run build
-    staticPublishPath: ./dist
+    buildCommand: cd parents-poll-frontend && npm install && npm run build
+    staticPublishPath: ./parents-poll-frontend/dist
     envVars:
       - key: VITE_API_BASE_URL
-        value: https://parents.myworldmysay.com/api
+        value: https://youth-poll-backend.onrender.com/api
 
   # Schools Site Frontend
   - type: web
     name: schools-poll-frontend
     env: static
     plan: free
-    buildCommand: npm install && npm run build
-    staticPublishPath: ./dist
+    buildCommand: cd schools-poll-frontend && npm install && npm run build
+    staticPublishPath: ./schools-poll-frontend/dist
     envVars:
       - key: VITE_API_BASE_URL
-        value: https://schools.myworldmysay.com/api
+        value: https://youth-poll-backend.onrender.com/api
 
 databases:
   # Shared PostgreSQL Database

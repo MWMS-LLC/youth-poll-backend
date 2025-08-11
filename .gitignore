@@ -27,6 +27,7 @@ env/
 ENV/
 env.bak/
 venv.bak/
+import_env_py311/
 
 # Database files
 *.db

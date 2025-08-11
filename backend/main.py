@@ -72,8 +72,23 @@ app.add_middleware(
 def get_current_site(request: Request) -> str:
     """Get current site from request headers or default to 'youth'"""
     # Check for site header (for future multi-site support)
-    site = request.headers.get('X-Site', 'youth')
-    return site
+    site = request.headers.get('X-Site')
+    if site:
+        return site
+    
+    # Auto-detect site from Referer header
+    referer = request.headers.get('Referer', '')
+    if 'teen-poll-frontend' in referer:
+        return 'teen'
+    elif 'youth-poll-frontend' in referer:
+        return 'youth'
+    elif 'schools-poll-frontend' in referer:
+        return 'schools'
+    elif 'parents-poll-frontend' in referer:
+        return 'parents'
+    
+    # Default to 'youth' if no referer or unknown
+    return 'youth'
 
 def get_question_data(question_code: str):
     """Get question and category data for denormalized storage"""

@@ -319,6 +319,7 @@ async def submit_other_response(response: OtherResponse, request: Request):
         
         # Store denormalized other response
         with engine.connect() as conn:
+            # First, store the text response in other_responses
             conn.execute(text("""
                 INSERT INTO other_responses (
                     user_uuid, other_text, question_code, question_text, question_number,
@@ -354,6 +355,49 @@ async def submit_other_response(response: OtherResponse, request: Request):
                 "setup_question_code": response.question_code,
                 "site": site
             })
+            
+            # Also create a vote record in responses table so it gets counted
+            conn.execute(text("""
+                INSERT INTO responses (
+                    user_uuid, question_code, question_text, question_number,
+                    category_id, category_name, category_text,
+                    option_id, option_code, option_text, block_number,
+                    setup_question_code, setup_option_id, site
+                ) VALUES (
+                    :user_uuid, :question_code, :question_text, :question_number,
+                    :category_id, :category_name, :category_text,
+                    :option_id, :option_code, :option_text, :block_number,
+                    :setup_question_code, :setup_option_id, :site
+                )
+                ON CONFLICT (user_uuid, question_code) 
+                DO UPDATE SET
+                    question_text = EXCLUDED.question_text,
+                    question_number = EXCLUDED.question_number,
+                    category_id = EXCLUDED.category_id,
+                    category_name = EXCLUDED.category_name,
+                    category_text = EXCLUDED.category_text,
+                    option_text = EXCLUDED.option_text,
+                    block_number = EXCLUDED.block_number,
+                    setup_question_code = EXCLUDED.setup_question_code,
+                    site = EXCLUDED.site,
+                    created_at = CURRENT_TIMESTAMP
+            """), {
+                "user_uuid": response.user_uuid,
+                "question_code": question_data["question_code"],
+                "question_text": question_data["question_text"],
+                "question_number": question_data["question_number"],
+                "category_id": question_data["category_id"],
+                "category_name": question_data["category_name"],
+                "category_text": question_data["category_text"],
+                "option_id": None,  # No specific option ID for OTHER
+                "option_code": "OTHER",  # This makes it count as a vote
+                "option_text": "Other",  # Standard text for OTHER option
+                "block_number": question_data["block_number"],
+                "setup_question_code": response.question_code,
+                "setup_option_id": None,  # No specific option ID for OTHER
+                "site": site
+            })
+            
             conn.commit()
         
         return {

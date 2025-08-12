@@ -421,22 +421,24 @@ async def get_question_results(question_code: str, request: Request):
     try:
         site = get_current_site(request)
         with engine.connect() as conn:
-            # Get standard responses
+            # Get standard responses with option text
             result = conn.execute(text("""
-                SELECT option_code, option_text, COUNT(*) as vote_count
-                FROM responses
-                WHERE question_code = :question_code AND site = :site
-                GROUP BY option_code, option_text
-                ORDER BY option_code
+                SELECT r.option_code, o.option_text, COUNT(*) as vote_count
+                FROM responses r
+                LEFT JOIN options o ON r.option_code = o.option_code AND r.question_code = o.question_code
+                WHERE r.question_code = :question_code AND r.site = :site
+                GROUP BY r.option_code, o.option_text
+                ORDER BY r.option_code
             """), {"question_code": question_code, "site": site})
             
-            # Get checkbox responses
+            # Get checkbox responses with option text
             checkbox_result = conn.execute(text("""
-                SELECT option_code, option_text, COUNT(*) as vote_count
-                FROM checkbox_responses
-                WHERE question_code = :question_code AND site = :site
-                GROUP BY option_code, option_text
-                ORDER BY option_code
+                SELECT cr.option_code, o.option_text, COUNT(*) as vote_count
+                FROM checkbox_responses cr
+                LEFT JOIN options o ON cr.option_code = o.option_code AND cr.question_code = o.question_code
+                WHERE cr.question_code = :question_code AND cr.site = :site
+                GROUP BY cr.option_code, o.option_text
+                ORDER BY cr.option_code
             """), {"question_code": question_code, "site": site})
             
             results = []
@@ -445,16 +447,18 @@ async def get_question_results(question_code: str, request: Request):
             # Process standard responses
             for row in result:
                 count = row[2]
+                option_text = row[1] if row[1] else f"Option {row[0]}"  # Fallback if option_text is None
                 total_votes += count
                 results.append({
                     "option_code": row[0],
-                    "option_text": row[1],
+                    "option_text": option_text,
                     "vote_count": count
                 })
             
             # Process checkbox responses
             for row in checkbox_result:
                 count = row[2]
+                option_text = row[1] if row[1] else f"Option {row[0]}"  # Fallback if option_text is None
                 total_votes += count
                 # Check if option already exists in results
                 existing_option = next((r for r in results if r["option_code"] == row[0]), None)
@@ -463,7 +467,7 @@ async def get_question_results(question_code: str, request: Request):
                 else:
                     results.append({
                         "option_code": row[0],
-                        "option_text": row[1],
+                        "option_text": option_text,
                         "vote_count": count
                     })
             

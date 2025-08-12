@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Youth Poll FastAPI Backend
-==========================
-Clean architecture with denormalized response storage
+Youth Poll Backend API
+FORCE DEPLOYMENT - This comment was added to force Railway to deploy the actual code changes
+Current version: 2025-08-12 08:00 - OTHER option fix deployed
 """
 
 from fastapi import FastAPI, HTTPException, Request
@@ -140,8 +140,18 @@ def get_option_data(question_code: str, option_code: str):
 
 @app.get("/")
 async def root():
-    """Health check endpoint"""
-    return {"message": "Youth Poll API is running", "version": "1.0.0"}
+    """Root endpoint"""
+    return {"message": "Youth Poll Backend API"}
+
+@app.get("/api/version")
+async def get_version():
+    """Get current deployed version - FORCE DEPLOYMENT TEST"""
+    return {
+        "version": "2025-08-12-08:00",
+        "status": "OTHER option fix deployed",
+        "timestamp": "2025-08-12T08:00:00Z",
+        "deployment_test": "This endpoint proves the new code is deployed"
+    }
 
 @app.get("/api/health")
 async def health_check():

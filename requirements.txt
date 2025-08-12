@@ -1,3 +1,5 @@
+# Youth Poll Backend Dependencies
+# FORCE DEPLOYMENT - Updated 2025-08-12 08:00
 fastapi==0.115.6
 uvicorn==0.32.1
 sqlalchemy==2.0.36

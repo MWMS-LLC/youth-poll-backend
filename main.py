@@ -423,21 +423,39 @@ async def get_question_results(question_code: str, request: Request):
         with engine.connect() as conn:
             # Get standard responses with option text
             result = conn.execute(text("""
-                SELECT r.option_code, o.option_text, COUNT(*) as vote_count
+                SELECT r.option_code, 
+                       CASE 
+                           WHEN r.option_code = 'OTHER' THEN 'Other'
+                           ELSE COALESCE(o.option_text, f'Option {r.option_code}')
+                       END as option_text,
+                       COUNT(*) as vote_count
                 FROM responses r
                 LEFT JOIN options o ON r.option_code = o.option_code AND r.question_code = o.question_code
                 WHERE r.question_code = :question_code AND r.site = :site
-                GROUP BY r.option_code, o.option_text
+                GROUP BY r.option_code, 
+                         CASE 
+                             WHEN r.option_code = 'OTHER' THEN 'Other'
+                             ELSE COALESCE(o.option_text, f'Option {r.option_code}')
+                         END
                 ORDER BY r.option_code
             """), {"question_code": question_code, "site": site})
             
             # Get checkbox responses with option text
             checkbox_result = conn.execute(text("""
-                SELECT cr.option_code, o.option_text, COUNT(*) as vote_count
+                SELECT cr.option_code, 
+                       CASE 
+                           WHEN cr.option_code = 'OTHER' THEN 'Other'
+                           ELSE COALESCE(o.option_text, f'Option {cr.option_code}')
+                       END as option_text,
+                       COUNT(*) as vote_count
                 FROM checkbox_responses cr
                 LEFT JOIN options o ON cr.option_code = o.option_code AND cr.question_code = o.question_code
                 WHERE cr.question_code = :question_code AND cr.site = :site
-                GROUP BY cr.option_code, o.option_text
+                GROUP BY cr.option_code, 
+                         CASE 
+                             WHEN cr.option_code = 'OTHER' THEN 'Other'
+                             ELSE COALESCE(o.option_text, f'Option {cr.option_code}')
+                         END
                 ORDER BY cr.option_code
             """), {"question_code": question_code, "site": site})
             
@@ -698,6 +716,37 @@ async def submit_checkbox_vote(vote: CheckboxVoteRequest, request: Request):
             
             # If OTHER is selected and other_text is provided, store it in other_responses
             if 'OTHER' in vote.option_codes and vote.other_text:
+                # Store the OTHER option in checkbox_responses so it gets counted
+                conn.execute(text("""
+                    INSERT INTO checkbox_responses (
+                        user_uuid, question_code, question_text, question_number,
+                        category_id, category_name, category_text,
+                        option_id, option_code, option_text, block_number,
+                        setup_question_code, setup_option_id, site
+                    ) VALUES (
+                        :user_uuid, :question_code, :question_text, :question_number,
+                        :category_id, :category_name, :category_text,
+                        :option_id, :option_code, :option_text, :block_number,
+                        :setup_question_code, :setup_option_id, :site
+                    )
+                """), {
+                    "user_uuid": vote.user_uuid,
+                    "question_code": question_data["question_code"],
+                    "question_text": question_data["question_text"],
+                    "question_number": question_data["question_number"],
+                    "category_id": question_data["category_id"],
+                    "category_name": question_data["category_name"],
+                    "category_text": question_data["category_text"],
+                    "option_id": None,  # No specific option ID for OTHER
+                    "option_code": "OTHER",
+                    "option_text": "Other",
+                    "block_number": question_data["block_number"],
+                    "setup_question_code": vote.question_code,
+                    "setup_option_id": None,
+                    "site": site
+                })
+                
+                # Also store the text response in other_responses
                 conn.execute(text("""
                     INSERT INTO other_responses (
                         user_uuid, question_code, question_text, question_number,

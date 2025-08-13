@@ -71,24 +71,13 @@ app.add_middleware(
 # Utility Functions
 # ======================
 def get_current_site(request: Request) -> str:
-    """Get current site from request headers or default to 'youth'"""
-    # Check for site header (for future multi-site support)
-    site = request.headers.get('X-Site')
-    if site:
+    """Get current site from query parameter or default to 'youth'"""
+    # Get site from query parameter (frontend tells us which site it is)
+    site = request.query_params.get('site')
+    if site and site in ['youth', 'teen', 'parents', 'schools']:
         return site
     
-    # Auto-detect site from Referer header
-    referer = request.headers.get('Referer', '')
-    if 'teen-poll-frontend' in referer:
-        return 'teen'
-    elif 'youth-poll-frontend' in referer:
-        return 'youth'
-    elif 'schools-poll-frontend' in referer:
-        return 'schools'
-    elif 'parents-poll-frontend' in referer:
-        return 'parents'
-    
-    # Default to 'youth' if no referer or unknown
+    # Default to 'youth' if no valid site parameter
     return 'youth'
 
 def get_question_data(question_code: str):
@@ -272,31 +261,21 @@ async def submit_vote(vote: VoteRequest, request: Request):
         with engine.connect() as conn:
             conn.execute(text("""
                 INSERT INTO responses (
-                    user_uuid, question_code, question_text, question_number,
-                    category_id, category_name, category_text,
-                    option_id, option_code, option_text, block_number,
-                    setup_question_code, setup_option_id, site
+                    user_uuid, question_code, question_text, option_code, option_text, category_name, version, site, year_of_birth, block_text
                 ) VALUES (
-                    :user_uuid, :question_code, :question_text, :question_number,
-                    :category_id, :category_name, :category_text,
-                    :option_id, :option_code, :option_text, :block_number,
-                    :setup_question_code, :setup_option_id, :site
+                    :user_uuid, :question_code, :question_text, :option_code, :option_text, :category_name, :version, :site, :year_of_birth, :block_text
                 )
             """), {
                 "user_uuid": vote.user_uuid,
                 "question_code": question_data["question_code"],
                 "question_text": question_data["question_text"],
-                "question_number": question_data["question_number"],
-                "category_id": question_data["category_id"],
-                "category_name": question_data["category_name"],
-                "category_text": question_data["category_text"],
-                "option_id": option_data["option_id"],
                 "option_code": vote.option_code,
                 "option_text": option_data["option_text"],
-                "block_number": question_data["block_number"],
-                "setup_question_code": vote.question_code,
-                "setup_option_id": option_data["option_id"],
-                "site": site
+                "category_name": question_data["category_name"],
+                "version": question_data.get("version", "1"),
+                "site": site,
+                "year_of_birth": getattr(vote, 'year_of_birth', None),
+                "block_text": question_data.get("block_text", "")
             })
             conn.commit()
         
@@ -332,56 +311,61 @@ async def submit_other_response(response: OtherResponse, request: Request):
             # First, store the text response in other_responses
             conn.execute(text("""
                 INSERT INTO other_responses (
-                    user_uuid, other_text, question_code, question_text, question_number,
-                    category_id, category_name, category_text, block_number,
-                    setup_question_code, site
+                    user_uuid, question_code, question_text, other_text, category_name, version, site, year_of_birth, block_text
                 ) VALUES (
-                    :user_uuid, :other_text, :question_code, :question_text, :question_number,
-                    :category_id, :category_name, :category_text, :block_number,
-                    :setup_question_code, :site
+                    :user_uuid, :question_code, :question_text, :other_text, :category_name, :version, :site, :year_of_birth, :block_text
                 )
                 ON CONFLICT (user_uuid, question_code) 
                 DO UPDATE SET
                     other_text = EXCLUDED.other_text,
                     question_text = EXCLUDED.question_text,
-                    question_number = EXCLUDED.question_number,
-                    category_id = EXCLUDED.category_id,
                     category_name = EXCLUDED.category_name,
-                    category_text = EXCLUDED.category_text,
-                    block_number = EXCLUDED.block_number,
-                    setup_question_code = EXCLUDED.setup_question_code,
+                    version = EXCLUDED.version,
                     site = EXCLUDED.site,
+                    year_of_birth = EXCLUDED.year_of_birth,
+                    block_text = EXCLUDED.block_text,
                     created_at = CURRENT_TIMESTAMP
             """), {
                 "user_uuid": response.user_uuid,
-                "other_text": response.other_text,
                 "question_code": question_data["question_code"],
                 "question_text": question_data["question_text"],
-                "question_number": question_data["question_number"],
-                "category_id": question_data["category_id"],
+                "other_text": response.other_text,
                 "category_name": question_data["category_name"],
-                "category_text": question_data["category_text"],
-                "block_number": question_data["block_number"],
-                "setup_question_code": response.question_code,
-                "site": site
+                "version": question_data.get("version", "1"),
+                "site": site,
+                "year_of_birth": getattr(response, 'year_of_birth', None),
+                "block_text": question_data.get("block_text", "")
             })
             
             # Also create a vote record in responses table so it gets counted
             conn.execute(text("""
                 INSERT INTO responses (
-                    user_uuid, question_code, option_code, site
+                    user_uuid, question_code, question_text, option_code, option_text, category_name, version, site, year_of_birth, block_text
                 ) VALUES (
-                    :user_uuid, :question_code, :option_code, :site
+                    :user_uuid, :question_code, :question_text, :option_code, :option_text, :category_name, :version, :site, :year_of_birth, :block_text
                 )
                 ON CONFLICT (user_uuid, question_code) 
                 DO UPDATE SET
+                    question_text = EXCLUDED.question_text,
                     option_code = EXCLUDED.option_code,
+                    option_text = EXCLUDED.option_text,
+                    category_name = EXCLUDED.category_name,
+                    version = EXCLUDED.version,
+                    site = EXCLUDED.site,
+                    year_of_birth = EXCLUDED.year_of_birth,
+                    block_text = EXCLUDED.block_text,
                     created_at = CURRENT_TIMESTAMP
             """), {
                 "user_uuid": response.user_uuid,
                 "question_code": question_data["question_code"],
+                "question_text": question_data["question_text"],
                 "option_code": "OTHER",  # This makes it count as a vote
-                "site": site
+                "option_text": "Other",  # Standard text for OTHER option
+                "category_name": question_data["category_name"],
+                "version": question_data.get("version", "1"),
+                "site": site,
+                "year_of_birth": getattr(response, 'year_of_birth', None),
+                "block_text": question_data.get("block_text", "")
             })
             
             conn.commit()
@@ -412,7 +396,7 @@ async def get_question_results(question_code: str, request: Request):
                 SELECT r.option_code, 
                        CASE 
                            WHEN r.option_code = 'OTHER' THEN 'Other'
-                           ELSE COALESCE(o.option_text, f'Option {r.option_code}')
+                           ELSE COALESCE(o.option_text, 'Option ' || r.option_code)
                        END as option_text,
                        COUNT(*) as vote_count
                 FROM responses r
@@ -421,7 +405,7 @@ async def get_question_results(question_code: str, request: Request):
                 GROUP BY r.option_code, 
                          CASE 
                              WHEN r.option_code = 'OTHER' THEN 'Other'
-                             ELSE COALESCE(o.option_text, f'Option {r.option_code}')
+                             ELSE COALESCE(o.option_text, 'Option ' || r.option_code)
                          END
                 ORDER BY r.option_code
             """), {"question_code": question_code, "site": site})
@@ -431,7 +415,7 @@ async def get_question_results(question_code: str, request: Request):
                 SELECT cr.option_code, 
                        CASE 
                            WHEN cr.option_code = 'OTHER' THEN 'Other'
-                           ELSE COALESCE(o.option_text, f'Option {cr.option_code}')
+                           ELSE COALESCE(o.option_text, 'Option ' || cr.option_code)
                        END as option_text,
                        COUNT(*) as vote_count
                 FROM checkbox_responses cr
@@ -440,7 +424,7 @@ async def get_question_results(question_code: str, request: Request):
                 GROUP BY cr.option_code, 
                          CASE 
                              WHEN cr.option_code = 'OTHER' THEN 'Other'
-                             ELSE COALESCE(o.option_text, f'Option {cr.option_code}')
+                             ELSE COALESCE(o.option_text, 'Option ' || cr.option_code)
                          END
                 ORDER BY cr.option_code
             """), {"question_code": question_code, "site": site})
@@ -673,31 +657,21 @@ async def submit_checkbox_vote(vote: CheckboxVoteRequest, request: Request):
                 if option_data:
                     conn.execute(text("""
                         INSERT INTO checkbox_responses (
-                            user_uuid, question_code, question_text, question_number,
-                            category_id, category_name, category_text,
-                            option_id, option_code, option_text, block_number,
-                            setup_question_code, setup_option_id, site
+                            user_uuid, question_code, question_text, option_code, option_text, category_name, version, site, year_of_birth, block_text
                         ) VALUES (
-                            :user_uuid, :question_code, :question_text, :question_number,
-                            :category_id, :category_name, :category_text,
-                            :option_id, :option_code, :option_text, :block_number,
-                            :setup_question_code, :setup_option_id, :site
+                            :user_uuid, :question_code, :question_text, :option_code, :option_text, :category_name, :version, :site, :year_of_birth, :block_text
                         )
                     """), {
                         "user_uuid": vote.user_uuid,
                         "question_code": question_data["question_code"],
                         "question_text": question_data["question_text"],
-                        "question_number": question_data["question_number"],
-                        "category_id": question_data["category_id"],
-                        "category_name": question_data["category_name"],
-                        "category_text": question_data["category_text"],
-                        "option_id": option_data["option_id"],
                         "option_code": option_code,
                         "option_text": option_data["option_text"],
-                        "block_number": question_data["block_number"],
-                        "setup_question_code": vote.question_code,
-                        "setup_option_id": option_data["option_id"],
-                        "site": site
+                        "category_name": question_data["category_name"],
+                        "version": question_data.get("version", "1"),
+                        "site": site,
+                        "year_of_birth": getattr(vote, 'year_of_birth', None),
+                        "block_text": question_data.get("block_text", "")
                     })
             
             # If OTHER is selected and other_text is provided, store it in other_responses
@@ -705,52 +679,50 @@ async def submit_checkbox_vote(vote: CheckboxVoteRequest, request: Request):
                 # Store the OTHER option in checkbox_responses so it gets counted
                 conn.execute(text("""
                     INSERT INTO checkbox_responses (
-                        user_uuid, question_code, option_code, site
+                        user_uuid, question_code, question_text, option_code, option_text, category_name, version, site, year_of_birth, block_text
                     ) VALUES (
-                        :user_uuid, :question_code, :option_code, :site
+                        :user_uuid, :question_code, :question_text, :option_code, :option_text, :category_name, :version, :site, :year_of_birth, :block_text
                     )
                 """), {
                     "user_uuid": vote.user_uuid,
                     "question_code": question_data["question_code"],
+                    "question_text": question_data["question_text"],
                     "option_code": "OTHER",
-                    "site": site
+                    "option_text": "Other",
+                    "category_name": question_data["category_name"],
+                    "version": question_data.get("version", "1"),
+                    "site": site,
+                    "year_of_birth": getattr(vote, 'year_of_birth', None),
+                    "block_text": question_data.get("block_text", "")
                 })
                 
                 # Also store the text response in other_responses
                 conn.execute(text("""
                     INSERT INTO other_responses (
-                        user_uuid, question_code, question_text, question_number,
-                        category_id, category_name, category_text, other_text,
-                        block_number, setup_question_code, site
+                        user_uuid, question_code, question_text, other_text, category_name, version, site, year_of_birth, block_text
                     ) VALUES (
-                        :user_uuid, :question_code, :question_text, :question_number,
-                        :category_id, :category_name, :category_text, :other_text,
-                        :block_number, :setup_question_code, :site
+                        :user_uuid, :question_code, :question_text, :other_text, :category_name, :version, :site, :year_of_birth, :block_text
                     )
                     ON CONFLICT (user_uuid, question_code) 
                     DO UPDATE SET
                         other_text = EXCLUDED.other_text,
                         question_text = EXCLUDED.question_text,
-                        question_number = EXCLUDED.question_number,
-                        category_id = EXCLUDED.category_id,
                         category_name = EXCLUDED.category_name,
-                        category_text = EXCLUDED.category_text,
-                        block_number = EXCLUDED.block_number,
-                        setup_question_code = EXCLUDED.setup_question_code,
+                        version = EXCLUDED.version,
                         site = EXCLUDED.site,
+                        year_of_birth = EXCLUDED.year_of_birth,
+                        block_text = EXCLUDED.block_text,
                         created_at = CURRENT_TIMESTAMP
                 """), {
                     "user_uuid": vote.user_uuid,
                     "question_code": question_data["question_code"],
                     "question_text": question_data["question_text"],
-                    "question_number": question_data["question_number"],
-                    "category_id": question_data["category_id"],
-                    "category_name": question_data["category_name"],
-                    "category_text": question_data["category_text"],
                     "other_text": vote.other_text,
-                    "block_number": question_data["block_number"],
-                    "setup_question_code": vote.question_code,
-                    "site": site
+                    "category_name": question_data["category_name"],
+                    "version": question_data.get("version", "1"),
+                    "site": site,
+                    "year_of_birth": getattr(vote, 'year_of_birth', None),
+                    "block_text": question_data.get("block_text", "")
                 })
             
             conn.commit()

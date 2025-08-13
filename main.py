@@ -781,6 +781,57 @@ async def get_stats():
         raise HTTPException(status_code=500, detail=f"Error getting stats: {str(e)}")
 
 # ======================
+# Temporary Migration Endpoint (Remove after use)
+# ======================
+@app.post("/api/admin/migrate-site-columns")
+async def migrate_site_columns():
+    """Temporary endpoint to add site columns to production database"""
+    try:
+        with engine.connect() as conn:
+            # Add site column to categories table
+            conn.execute(text("ALTER TABLE categories ADD COLUMN IF NOT EXISTS site TEXT NOT NULL DEFAULT 'youth'"))
+            
+            # Update existing categories to separate youth vs teen
+            conn.execute(text("UPDATE categories SET site = 'youth' WHERE id = 1"))
+            conn.execute(text("UPDATE categories SET site = 'teen' WHERE id IN (7, 8, 9, 10, 11, 12)"))
+            
+            # Add site column to other tables
+            conn.execute(text("ALTER TABLE questions ADD COLUMN IF NOT EXISTS site TEXT NOT NULL DEFAULT 'youth'"))
+            conn.execute(text("ALTER TABLE options ADD COLUMN IF NOT EXISTS site TEXT NOT NULL DEFAULT 'youth'"))
+            conn.execute(text("ALTER TABLE blocks ADD COLUMN IF NOT EXISTS site TEXT NOT NULL DEFAULT 'youth'"))
+            
+            # Update related tables to match category site
+            conn.execute(text("""
+                UPDATE questions SET site = c.site 
+                FROM categories c 
+                WHERE questions.category_id = c.id
+            """))
+            
+            conn.execute(text("""
+                UPDATE options SET site = q.site 
+                FROM questions q 
+                WHERE options.question_code = q.question_code
+            """))
+            
+            conn.execute(text("""
+                UPDATE blocks SET site = c.site 
+                FROM categories c 
+                WHERE blocks.category_id = c.id
+            """))
+            
+            # Remove defaults
+            conn.execute(text("ALTER TABLE categories ALTER COLUMN site DROP DEFAULT"))
+            conn.execute(text("ALTER TABLE questions ALTER COLUMN site DROP DEFAULT"))
+            conn.execute(text("ALTER TABLE options ALTER COLUMN site DROP DEFAULT"))
+            conn.execute(text("ALTER TABLE blocks ALTER COLUMN site DROP DEFAULT"))
+            
+            conn.commit()
+            
+        return {"message": "Site columns migration completed successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Migration failed: {str(e)}")
+
+# ======================
 # Run the app
 # ======================
 if __name__ == "__main__":
